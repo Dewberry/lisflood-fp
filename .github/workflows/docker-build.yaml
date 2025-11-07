@@ -45,18 +45,6 @@ jobs:
         with:
           registries: ${{ secrets.AWS_ACCOUNT_NUMBER }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}
-        tags: |
-          # Tag with short git SHA
-          type=sha,format=short
-
-          # Tag as "latest" when building from main branch
-          type=raw,value=latest,enable=${{ inputs.branch == 'main' }}
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
