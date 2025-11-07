@@ -1,0 +1,92 @@
+name: Docker Build
+
+on:
+  workflow_call:
+    inputs:
+      push_to_registry:
+        type: boolean
+        default: false
+      branch:
+        type: string
+        required: true
+      platforms:
+        type: string
+        default: 'linux/amd64'
+    secrets:
+      AWS_ACCOUNT_NUMBER:
+        required: true
+      AWS_ROLE:
+        required: true
+      AWS_REGION:
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/${{ secrets.AWS_ROLE }}
+          role-session-name: updateimage
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ secrets.AWS_ACCOUNT_NUMBER }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}
+        tags: |
+          # Tag with short git SHA
+          type=sha,format=short
+
+          # Tag as "latest" when building from main branch
+          type=raw,value=latest,enable=${{ inputs.branch == 'main' }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push GPU image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: gpu_build
+          platforms: ${{ inputs.platforms }}
+          push: ${{ inputs.push_to_registry }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-gpu
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest-gpu
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push CPU image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: cpu_build
+          platforms: ${{ inputs.platforms }}
+          push: ${{ inputs.push_to_registry }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-cpu
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest-cpu
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
