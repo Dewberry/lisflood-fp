@@ -15,9 +15,7 @@ COPY . /opt/src/lisflood
 RUN cmake -S /opt/src/lisflood \
            -B /opt/build/lisflood \
            -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build /opt/build/lisflood && \
-    cp /opt/build/lisflood/lisflood /usr/local/bin/ && \
-    rm -rf /opt/src/lisflood /opt/build/lisflood
+    cmake --build /opt/build/lisflood
 
 FROM ubuntu:22.04 AS cpu_build
 
