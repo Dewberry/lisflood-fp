@@ -364,3 +364,6 @@ build/
 *.jpg
 *.mat
 *.exe
+
+# go
+main
