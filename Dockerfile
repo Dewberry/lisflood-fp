@@ -1,9 +1,7 @@
-FROM ubuntu:22.04 AS base
+FROM ubuntu:22.04 AS cpu_builder
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
-
-FROM base AS cpu_build
 
 # Install build deps
 RUN apt-get update && \
@@ -17,9 +15,20 @@ COPY . /opt/src/lisflood
 RUN cmake -S /opt/src/lisflood \
            -B /opt/build/lisflood \
            -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build /opt/build/lisflood --parallel && \
+    cmake --build /opt/build/lisflood && \
     cp /opt/build/lisflood/lisflood /usr/local/bin/ && \
     rm -rf /opt/src/lisflood /opt/build/lisflood
+
+FROM ubuntu:22.04 AS cpu_build
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libnuma1 libnetcdf19 libgomp1 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the built binary from the builder stage
+COPY --from=cpu_builder /opt/build/lisflood/lisflood /usr/local/bin/
 
 # Set workdir
 WORKDIR /workspace
@@ -27,23 +36,12 @@ WORKDIR /workspace
 # Default command
 CMD ["/bin/bash"]
 
-FROM base AS gpu_build
+FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS gpu_builder
 
 # Install build deps
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         wget build-essential cmake libnuma-dev libnetcdf-dev gnupg ca-certificates
-
-# Add CUDA 11.8 repository
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin \
-    && mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb \
-    && dpkg -i cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb \
-    && cp /var/cuda-repo-ubuntu2204-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
-    && apt-get update \
-    && apt-get install -y cuda-toolkit-11-8 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Add nvcc to PATH
 ENV PATH=/usr/local/cuda-11.8/bin:$PATH
@@ -59,10 +57,18 @@ COPY . /opt/src/lisflood
 RUN cmake -S /opt/src/lisflood \
            -B /opt/build/lisflood \
            -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build /opt/build/lisflood --parallel && \
-    cp /opt/build/lisflood/lisflood /usr/local/bin/ && \
-    rm -rf /opt/src/lisflood /opt/build/lisflood
+    cmake --build /opt/build/lisflood
 
+FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS gpu_build
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libnuma1 libnetcdf19 libgomp1 ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the built binary from the builder stage
+COPY --from=gpu_builder /opt/build/lisflood/lisflood /usr/local/bin/
 
 # Set workdir
 WORKDIR /workspace
