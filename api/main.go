@@ -41,6 +41,7 @@ func main() {
 	}))
 
 	e.GET("/ping", ctrl.Ping)
+	e.POST("/run_model", ctrl.HandleRunModel)
 
 	// Start server
 	go func() {
