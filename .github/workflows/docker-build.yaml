@@ -60,8 +60,8 @@ jobs:
           platforms: ${{ inputs.platforms }}
           push: ${{ inputs.push_to_registry }}
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-gpu
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest-gpu
+            ${{ steps.login-ecr.outputs.registry }}/lisflood-fp:sha-${{ github.sha }}-gpu
+            ${{ steps.login-ecr.outputs.registry }}/lisflood-fp:latest-gpu
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -74,7 +74,7 @@ jobs:
           platforms: ${{ inputs.platforms }}
           push: ${{ inputs.push_to_registry }}
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-cpu
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest-cpu
+            ${{ steps.login-ecr.outputs.registry }}/lisflood-fp:sha-${{ github.sha }}-cpu
+            ${{ steps.login-ecr.outputs.registry }}/lisflood-fp:latest-cpu
           cache-from: type=gha
           cache-to: type=gha,mode=max
