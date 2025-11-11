@@ -1,0 +1,58 @@
+{
+	"info": {
+		"_postman_id": "c4170ac9-3347-4755-86a0-0d3cecd4f48e",
+		"name": "lisflood-fp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13379630"
+	},
+	"item": [
+		{
+			"name": "Ping",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:5000/ping",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run Model",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"model_dir\": \"/path/to/par.par\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:5000/run_model",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"run_model"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
