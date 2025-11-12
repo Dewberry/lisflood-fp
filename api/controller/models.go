@@ -2,8 +2,8 @@ package controller
 
 import (
 	"net/http"
-
 	"github.com/labstack/echo/v4"
+	"os/exec"
 )
 
 type Model struct {
@@ -19,7 +19,11 @@ func (ctrl *Controller) HandleRunModel(c echo.Context) error {
 	if b.ModelDir == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Missing the following required field: model_dir"})
 	}
-
-	return c.JSON(http.StatusOK, map[string]string{"message": "Recieved model request for: " + b.ModelDir})
+	cmd := exec.Command("/usr/local/bin/lisflood", b.ModelDir)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": string(output)})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"output": string(output)})
 
 }
