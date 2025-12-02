@@ -67,24 +67,29 @@ CMD [ "/api/main" ]
 ### Build a GPU-based LISFLOOD-FP binary ###
 ############################################
 
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS gpu_builder
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS gpu_builder
 
-# Install build deps
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        wget build-essential cmake libnuma-dev libnetcdf-dev gnupg ca-certificates
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Add nvcc to PATH
-ENV PATH=/usr/local/cuda-11.8/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc-11 g++-11 \
+    cmake \
+    libnuma-dev \
+    libnetcdf-dev \
+    ca-certificates
 
-# Update nvcc gcc linkage
-ENV CC=/usr/bin/gcc-11
-ENV CXX=/usr/bin/g++-11
+# Set gcc-11 as default (required for CUDA 11.8)
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 50 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 50
 
-# Build LISFLOOD
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+
+# Copy LISFLOOD source
 COPY ./lisflood/ /opt/src/lisflood/
 
+# Build LISFLOOD (CUDA solvers auto-enabled)
 RUN cmake -S /opt/src/lisflood \
            -B /opt/build/lisflood \
            -DCMAKE_BUILD_TYPE=Release && \
@@ -94,12 +99,13 @@ RUN cmake -S /opt/src/lisflood \
 ### Create lightweight GPU-based LISFLOOD-FP model runner ###
 #############################################################
 
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS gpu_build
+FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04 AS gpu_build
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        libnuma1 libnetcdf19 libgomp1 ca-certificates && \
-    apt-get clean && \
+RUN apt-get update && apt-get install -y \
+    libnuma1 \
+    libnetcdf19 \
+    libgomp1 \
+    ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the built binary from the builder stage
