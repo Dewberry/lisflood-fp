@@ -30,6 +30,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -45,8 +48,8 @@ jobs:
           platforms: ${{ inputs.platforms }}
           push: ${{ inputs.push_to_registry }}
           tags: |
-            ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-gpu
-            ghcr.io/${{ github.repository }}:latest-gpu
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-gpu
+            ${{ env.IMAGE_NAME }}:latest-gpu
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -59,7 +62,7 @@ jobs:
           platforms: ${{ inputs.platforms }}
           push: ${{ inputs.push_to_registry }}
           tags: |
-            ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-cpu
-            ghcr.io/${{ github.repository }}:latest-cpu
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}-cpu
+            ${{ env.IMAGE_NAME }}:latest-cpu
           cache-from: type=gha
           cache-to: type=gha,mode=max
