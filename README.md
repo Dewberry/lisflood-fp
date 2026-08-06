@@ -1,3 +1,10 @@
+# Source
+
+The lisflood-fp source code in this repository was obtained from:
+
+> LISFLOOD-FP developers. (2024). *LISFLOOD-FP v8.2 hydrodynamic model* (Version 8.2) \[Computer software\]. Zenodo. [https://doi.org/10.5281/zenodo.13121102](https://doi.org/10.5281/zenodo.13121102)
+
+
 # Compilation
 LISFLOOD-FP can be compiled on Windows or Linux using [CMake](https://cmake.org) version 3.13 or above.
 
@@ -45,11 +52,11 @@ Then, in Windows, edit the appropriate configuration in `CMakeSettings.json`:
 "configurations": [
   {
     "name": "msvc-x64-Debug",
-    …
+    ï¿½
     "cmakeCommandArgs": "-D_CONFIG=<filename>",
-    …
+    ï¿½
   }
-  …
+  ï¿½
 ]
 ````
 
